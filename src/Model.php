@@ -4,24 +4,11 @@ namespace Scool\EbreEscoolModel;
 
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Support\Str;
+use Scool\EbreEscoolModel\Traits\Ebrescoolable;
 
 class Model extends EloquentModel
 {
-    /**
-     * Dynamically retrieve attributes on the model.
-     *
-     * @param  string  $key
-     * @return mixed
-     */
-    public function __get($key)
-    {
-        return $this->getAttribute($key) ?: $this->getAttribute($this->model(). '_' .$key) ;
-    }
-
-    protected function model()
-    {
-        return Str::snake(class_basename($this));
-    }
+    use Ebrescoolable;
 
     /**
      * Get the primary key for the model.
