@@ -1,12 +1,12 @@
 {
-    "name": "Scool/ebre_escool_model",
+    "name": "scool/ebre_escool_model",
     "type": "library",
     "description": "Laravel model for old ebre_escool database",
     "keywords": [
         "Scool",
         "ebre_escool_model"
     ],
-    "homepage": "https://github.com/Scool/ebre_escool_model",
+    "homepage": "https://github.com/acacha/ebre_escool_model",
     "license": "MIT",
     "authors": [
         {
