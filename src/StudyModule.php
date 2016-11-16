@@ -31,7 +31,7 @@ class StudyModule extends EloquentModel
         if ($this->getAttribute($key)) {
             $attribute = $this->getAttribute($key);
         } else {
-            if ($this->getAttribute($this->model(). '_' .$key)) {
+            if ($this->getAttribute('study_module_' .$key)) {
                 $attribute = $this->getAttribute('study_module_' .$key);
             } else {
                 $attribute = $this->getAttributeInPeriod($key);
@@ -52,7 +52,7 @@ class StudyModule extends EloquentModel
         if ($attribute = $this->modulesByPeriod()->active()->first()->getAttribute($key)) {
             return $attribute;
         }
-        return $this->modulesByPeriod()->active()->first()->getAttribute('study_module_' .$key);
+        return $this->modulesByPeriod()->active()->first()->getAttribute('study_module_academic_periods_' .$key);
     }
 
     /**

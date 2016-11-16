@@ -65,6 +65,15 @@ class EbreEscoolMigrator implements Migrator
                 foreach ($study->allCourses()->get() as $course) {
                     $this->output->info('   Migrating course: ' . $course->name . '('. $course->id . ')...');
 
+                    $sortedModules = $course->modules()->active()->get()->sortBy(
+                        function ($module, $key) {
+                            return $module->order;
+                        }
+                    );
+
+                    foreach ($course->modules()->active()->get() as $module) {
+                        $this->output->info('    Migrating module: ' . $module->order . ' ' .  $module->name . ' | ' . $module->shortname . ' ('. $module->id . ')...');
+                    }
                 }
             }
         }
@@ -84,7 +93,8 @@ class EbreEscoolMigrator implements Migrator
     protected function departments()
     {
         //Avoid using FOL because is a transversal department
-        return Department::whereNotIn('department_id', [3])->get();
+        //return Department::whereNotIn('department_id', [3])->get();
+        return Department::whereIn('department_id', [2])->get();
     }
 
     /**
@@ -97,4 +107,6 @@ class EbreEscoolMigrator implements Migrator
     {
         return $collection->implode($field, $separator);
     }
+
+
 }

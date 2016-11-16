@@ -53,8 +53,8 @@ class Course extends Model implements HasPeriods
      */
     public function modules()
     {
-        return $this->belongsToMany(Study::class, 'study_module_ap_courses',
-            'study_module_ap_courses_course_id', 'study_module_ap_courses_study_module_ap_id');
+        return $this->belongsToMany(StudyModuleAcademicPeriod::class, 'study_module_ap_courses',
+            'study_module_ap_courses_course_id','study_module_ap_courses_study_module_ap_id');
     }
 
 }

@@ -30,7 +30,31 @@ class StudyModuleAcademicPeriod extends EloquentModel
      */
     public function __get($key)
     {
-        return $this->getAttribute($key) ?: $this->getAttribute('study_module_academic_periods_' .$key) ;
+        if ($this->getAttribute($key)) {
+            $attribute = $this->getAttribute($key);
+        } else {
+            if ($this->getAttribute('study_module_' .$key)) {
+                $attribute = $this->getAttribute('study_module_' .$key);
+            } else {
+                $attribute = $this->getAttributeInMainModel($key);
+            }
+        }
+
+        return $attribute;
+    }
+
+    /**
+     *
+     * Search for attribute in main study module.
+     *
+     * @param $key
+     */
+    public function getAttributeInMainModel($key)
+    {
+        if ($attribute = $this->module->getAttribute($key)) {
+            return $attribute;
+        }
+        return $this->module->getAttribute('study_module_' .$key);
     }
 
     /**
@@ -50,7 +74,7 @@ class StudyModuleAcademicPeriod extends EloquentModel
      */
     public function scopeActive($query)
     {
-        return $this->scopeActiveOn($query,AcademicPeriod::current());
+        return $this->scopeActiveOn($query,AcademicPeriod::current()->first()->id);
     }
 
     /**
