@@ -13,6 +13,9 @@ class AcademicPeriod extends EloquentModel
 {
     use Ebrescoolable;
 
+    /**
+     * @var string
+     */
     protected $primaryKey = 'academic_periods_id';
 
     /**
@@ -23,8 +26,13 @@ class AcademicPeriod extends EloquentModel
         return 'academic_periods';
     }
 
+    /**
+     * @param $query
+     * @return mixed
+     */
     public function scopeCurrent($query)
     {
         return $query->where('academic_periods_current', 1);
     }
+
 }

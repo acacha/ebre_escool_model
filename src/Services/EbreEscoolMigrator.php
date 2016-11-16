@@ -2,8 +2,8 @@
 
 namespace Scool\EbreEscoolModel\Services;
 
-use Illuminate\Database\Eloquent\Collection;
 use Scool\EbreEscoolModel\AcademicPeriod;
+use Scool\EbreEscoolModel\Course;
 use Scool\EbreEscoolModel\Department;
 use Scool\EbreEscoolModel\Services\Contracts\Migrator;
 use Scool\EbreEscoolModel\Services\Contracts\Output;
@@ -59,10 +59,13 @@ class EbreEscoolMigrator implements Migrator
     {
         foreach ($this->departments() as $department) {
             $this->output->info('Migrating department: ' . $department->name . '('. $department->id . ')...');
-            $this->output->line(' Studies: ' . $this->printCollection($studies = $department->studiesActiveOn($this->period)->get(), 'studies_name'));
-            foreach ($studies as $study) {
-                $this->output->info('  Migrating study: ' . $study->name . '('. $study->id . ')...');
-                $this->output->line('   Periods: ' . $this->printCollection($periods = $study->periods,'academic_periods_name'));
+            foreach ($department->studiesActiveOn($this->period)->get() as $study) {
+                $suffix = $study->multiple() ? ". <bg=yellow;options=bold>Study is multiple!</>" : "";
+                $this->output->info('  Migrating study: ' . $study->name . '('. $study->id . ') ' . $suffix . ' ...');
+                foreach ($study->allCourses()->get() as $course) {
+                    $this->output->info('   Migrating course: ' . $course->name . '('. $course->id . ')...');
+
+                }
             }
         }
     }

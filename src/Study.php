@@ -3,14 +3,17 @@
 namespace Scool\EbreEscoolModel;
 
 use Illuminate\Database\Eloquent\Model as EloquentModel;
-use Scool\EbreEscoolModel\Scopes\ActivePeriodScope;
+use Scool\EbreEscoolModel\Contracts\HasPeriods;
+use Scool\EbreEscoolModel\Traits\Periodable;
 
 /**
  * Class Study
  * @package Scool\EbreEscoolModel
  */
-class Study extends EloquentModel
+class Study extends EloquentModel implements HasPeriods
 {
+    use Periodable;
+
     /**
      * The table associated with the model.
      *
@@ -57,28 +60,65 @@ class Study extends EloquentModel
     }
 
     /**
-     * Only studies active for current period.
-     *
-     * @param $query
-     * @return mixed
+     * Get the study courses.
      */
-    public function scopeActive($query)
+    public function allCourses()
     {
-        return $query->whereHas('periods', function($query){
-            $query->where('academic_periods_current', 1);
-        });
+        return $this->multiple() ? $this->allCoursesForMultiple() : $this->allCoursesForSingle();
     }
 
     /**
-     * Only studies active for given period.
-     * @param $query
+     * Get all courses for studies of type multiple.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    protected function allCoursesForMultiple() {
+        return $this->belongsToMany(Course::class, 'course_studies',
+            'course_studies_study_id','course_studies_course_id');
+    }
+
+    /**
+     * Get all courses for studies of type single.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    protected function allCoursesForSingle() {
+        return $this->hasMany(Course::class,'course_study_id','studies_id');
+    }
+
+    /**
+     * Get only active studies related to department.
+     */
+    public function courses()
+    {
+        return $this->allCourses()->active();
+    }
+
+
+    /**
+     * Get only active studies related to department.
+     *
      * @param $period
      * @return mixed
      */
-    public function scopeActiveOn($query, $period)
+    public function coursesActiveOn($period)
     {
-        return $query->whereHas('periods', function($query) use ($period){
-            $query->where('academic_periods_id', $period);
-        });
+        return $this->allCourses()->activeOn($period);
+    }
+
+    /**
+     * Get the study study modules.
+     */
+    public function modules()
+    {
+       // TODO though courses
+    }
+
+    /**
+     * Check if study is multiple (like ASIX-DAM)
+     * @return boolean
+     */
+    public function multiple() {
+        return (boolean) $this->studies_multiple;
     }
 }

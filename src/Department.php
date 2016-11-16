@@ -3,8 +3,7 @@
 namespace Scool\EbreEscoolModel;
 
 /**
- * Class Department.
- *
+ * Class Department
  * @package Scool\EbreEscoolModel
  */
 class Department extends Model
@@ -12,7 +11,7 @@ class Department extends Model
     /**
      * Get all studies related to deparment for all academic periods.
      */
-    public function all_studies()
+    public function allStudies()
     {
         return $this->belongsToMany(Study::class, 'study_department', 'department_id', 'study_id');
     }
@@ -22,15 +21,18 @@ class Department extends Model
      */
     public function studies()
     {
-        return $this->all_studies()->active();
+        return $this->allStudies()->active();
     }
 
     /**
      * Get only active studies related to department.
+     *
+     * @param $period
+     * @return mixed
      */
     public function studiesActiveOn($period)
     {
-        return $this->all_studies()->activeOn($period);
+        return $this->allStudies()->activeOn($period);
     }
 
 }
