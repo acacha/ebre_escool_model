@@ -7,6 +7,7 @@ use Scool\EbreEscoolModel\Course;
 use Scool\EbreEscoolModel\Department;
 use Scool\EbreEscoolModel\Services\Contracts\Migrator;
 use Scool\EbreEscoolModel\Services\Contracts\Output;
+use Scool\EbreEscoolModel\StudySubModule;
 
 /**
  * Class EbreEscoolMigrator
@@ -48,7 +49,9 @@ class EbreEscoolMigrator implements Migrator
      */
     public function migrate()
     {
-        $this->period = 5;
+        $this->period = 7;
+        $this->output->info('Migrating period: ' . $this->period);
+
         $this->migrateCurriculum();
     }
 
@@ -57,26 +60,47 @@ class EbreEscoolMigrator implements Migrator
      */
     private function migrateCurriculum()
     {
+        ! count($this->departments()) ? dd('Error 0 departments') : null;
         foreach ($this->departments() as $department) {
             $this->output->info('Migrating department: ' . $department->name . '('. $department->id . ')...');
+
+            ! count($department->studiesActiveOn($this->period)->get()) ? dd('Error 0 studies') : null;
             foreach ($department->studiesActiveOn($this->period)->get() as $study) {
+                //echo $study->periods->pluck('academic_periods_id');
                 $suffix = $study->multiple() ? ". <bg=yellow;options=bold>Study is multiple!</>" : "";
                 $this->output->info('  Migrating study: ' . $study->name . '('. $study->id . ') ' . $suffix . ' ...');
-                foreach ($study->allCourses()->get() as $course) {
+                ! count($study->allCourses()->active()->get() ) ? dd('Error 0 courses') : null;
+                foreach ($study->allCourses()->active()->get() as $course) {
+                    //echo $course->periods->pluck('academic_periods_id');
                     $this->output->info('   Migrating course: ' . $course->name . '('. $course->id . ')...');
-
-                    $sortedModules = $course->modules()->active()->get()->sortBy(
+                    $modules = $course->modules()->active()->get();
+                    ! count($modules) ? dd('Error 0 modules') : null;
+                    $sortedModules = $modules->sortBy(
                         function ($module, $key) {
                             return $module->order;
                         }
                     );
 
-                    foreach ($course->modules()->active()->get() as $module) {
+                    foreach ($sortedModules as $module) {
+                        //dd($module->module()->first());
+                        //echo $module->periods->pluck('academic_periods_id');
                         $this->output->info('    Migrating module: ' . $module->order . ' ' .  $module->name . ' | ' . $module->shortname . ' ('. $module->id . ')...');
+                        ! count($module->module()->first()->submodules()->active()->get()) ? dd('Error 0 submodules') : null;
+                        foreach ($module->module()->first()->submodules()->active()->get() as $submodule) {
+                            echo $submodule->periods->pluck('academic_periods_id');
+                            $this->output->info('     Migrating submodule: ' . $submodule->order . ' ' .  $submodule->name . ' | ' . $submodule->shortname . ' ('. $submodule->id . ')...');
+
+                            $this->migrateSubmodule($submodule);
+                        }
                     }
                 }
             }
         }
+    }
+
+    public function migrateSubmodule(StudySubModule $submodule)
+    {
+        
     }
 
     /**
@@ -93,8 +117,8 @@ class EbreEscoolMigrator implements Migrator
     protected function departments()
     {
         //Avoid using FOL because is a transversal department
-        //return Department::whereNotIn('department_id', [3])->get();
-        return Department::whereIn('department_id', [2])->get();
+        return Department::whereNotIn('department_id', [3])->get();
+        //return Department::whereIn('department_id', [2])->get();
     }
 
     /**

@@ -5,23 +5,23 @@ use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Scool\EbreEscoolModel\Traits\Periodable;
 
 /**
- * Class StudyModule.
+ * Class StudySubModule.
  *
  * @package Scool\EbreEscoolModel
  */
-class StudyModule extends EloquentModel
+class StudySubModule extends EloquentModel
 {
     use Periodable;
 
     /**
      * @var string
      */
-    protected $table = 'study_module';
+    protected $table = 'study_submodules';
 
     /**
      * @var string
      */
-    protected $primaryKey = 'study_module_id';
+    protected $primaryKey = 'study_submodules_id';
 
     /**
      * Dynamically retrieve attributes on the model.
@@ -34,8 +34,8 @@ class StudyModule extends EloquentModel
         if ($this->getAttribute($key)) {
             $attribute = $this->getAttribute($key);
         } else {
-            if ($this->getAttribute('study_module_' .$key)) {
-                $attribute = $this->getAttribute('study_module_' .$key);
+            if ($this->getAttribute('study_submodules_' .$key)) {
+                $attribute = $this->getAttribute('study_submodules_' .$key);
             } else {
                 $attribute = $this->getAttributeInPeriod($key);
             }
@@ -75,15 +75,8 @@ class StudyModule extends EloquentModel
      */
     public function periods()
     {
-        return $this->belongsToMany(AcademicPeriod::class, 'study_module_academic_periods',
-            'study_module_academic_periods_study_module_id', 'study_module_academic_periods_academic_period_id');
-    }
-
-    public function submodules()
-    {
-        return $this->hasMany(StudySubModule::class,
-            'study_submodules_study_module_id', 'study_module_id'
-        );
+        return $this->belongsToMany(AcademicPeriod::class, 'study_submodules_academic_periods',
+            'study_submodules_academic_periods_study_submodules_id', 'study_submodules_academic_periods_academic_period_id');
     }
 
 }

@@ -6,7 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Scool\EbreEscoolModel\Services\Contracts\Migrator;
 use Scool\EbreEscoolModel\Services\EbreEscoolMigrator;
 
-class EbreEscoolMigratorService extends ServiceProvider
+class EbreEscoolMigratorServiceProvider extends ServiceProvider
 {
     /**
      * Bootstrap the application services.

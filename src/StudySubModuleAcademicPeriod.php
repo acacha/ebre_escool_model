@@ -5,22 +5,22 @@ use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Scool\EbreEscoolModel\Traits\Periodable;
 
 /**
- * Class StudyModuleAcademicPeriod.
+ * Class StudySubModuleAcademicPeriod.
  *
  * @package Scool\EbreEscoolModel
  */
-class StudyModuleAcademicPeriod extends EloquentModel
+class StudySubModuleAcademicPeriod extends EloquentModel
 {
 
     /**
      * @var string
      */
-    protected $table = 'study_module_academic_periods';
+    protected $table = 'study_submodules_academic_periods';
 
     /**
      * @var string
      */
-    protected $primaryKey = 'study_module_academic_periods_id';
+    protected $primaryKey = 'study_submodules_academic_periods_id';
 
     /**
      * Dynamically retrieve attributes on the model.
@@ -33,8 +33,8 @@ class StudyModuleAcademicPeriod extends EloquentModel
         if ($this->getAttribute($key)) {
             $attribute = $this->getAttribute($key);
         } else {
-            if ($this->getAttribute('study_module_academic_periods_' .$key)) {
-                $attribute = $this->getAttribute('study_module_academic_periods_' .$key);
+            if ($this->getAttribute('study_submodules_academic_periods_' .$key)) {
+                $attribute = $this->getAttribute('study_submodules_academic_periods_' .$key);
             } else {
                 $attribute = $this->getAttributeInMainModel($key);
             }
@@ -54,16 +54,16 @@ class StudyModuleAcademicPeriod extends EloquentModel
         if ($attribute = $this->module->getAttribute($key)) {
             return $attribute;
         }
-        return $this->module->getAttribute('study_module_' .$key);
+        return $this->module->getAttribute('study_submodules_' .$key);
     }
 
     /**
      * Get the study module related to this model.
      */
-    public function module()
+    public function submodule()
     {
-        return $this->belongsTo(StudyModule::class,
-            'study_module_academic_periods_study_module_id', 'study_module_id');
+        return $this->belongsTo(StudySubModule::class,
+            'study_submodules_academic_periods_study_module_id', 'study_submodules_id');
     }
 
     /**
@@ -87,7 +87,7 @@ class StudyModuleAcademicPeriod extends EloquentModel
     public function scopeActiveOn($query, $period)
     {
         return $query->where(
-            'study_module_academic_periods_academic_period_id',
+            'study_submodules_academic_periods_academic_period_id',
             $period
         );
     }
