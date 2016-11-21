@@ -2,6 +2,7 @@
 
 namespace Scool\EbreEscoolModel\Services;
 
+use Scool\Curriculum\Models\Submodule;
 use Scool\EbreEscoolModel\AcademicPeriod;
 use Scool\EbreEscoolModel\Course;
 use Scool\EbreEscoolModel\Department;
@@ -28,6 +29,8 @@ class EbreEscoolMigrator implements Migrator
     protected $period;
 
     /**
+     * set output.
+     *
      * @param Output $output
      */
     public function setOutput(Output $output)
@@ -37,6 +40,7 @@ class EbreEscoolMigrator implements Migrator
 
     /**
      * EbreEscoolMigrator constructor.
+     *
      * @param $output
      */
     public function __construct(Output $output = null)
@@ -51,7 +55,8 @@ class EbreEscoolMigrator implements Migrator
     {
         $this->period = 7;
         $this->output->info('Migrating period: ' . $this->period);
-
+        config(['database.default' => env('DB_EBRE_ESCOOL_CONNECTION', 'ebre_escool')]);
+        $this->truncate();
         $this->migrateCurriculum();
     }
 
@@ -98,9 +103,23 @@ class EbreEscoolMigrator implements Migrator
         }
     }
 
-    public function migrateSubmodule(StudySubModule $submodule)
+    /**
+     * @param StudySubModule $srcSubmodule
+     */
+    public function migrateSubmodule(StudySubModule $srcSubmodule)
     {
-        
+//        dd($srcSubmodule);
+        $submodule = new Submodule();
+        config(['database.default' => env('DB_SCOOL_CONNECTION', 'scool')]);
+        $submodule->name = $srcSubmodule->name;
+        $submodule->order = $srcSubmodule->order;
+        $submodule->type = "FCT";
+        $submodule->save();
+        $submodule->altnames = [
+            'shortname' => $srcSubmodule->shortname,
+            'description' => $srcSubmodule->description
+        ];
+        config(['database.default' => env('DB_EBRE_ESCOOL_CONNECTION', 'ebre_escool')]);
     }
 
     /**
@@ -112,16 +131,20 @@ class EbreEscoolMigrator implements Migrator
     }
 
     /**
+     * Get the deparments to migrate.
+     *
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
     protected function departments()
     {
         //Avoid using FOL because is a transversal department
-        return Department::whereNotIn('department_id', [3])->get();
-        //return Department::whereIn('department_id', [2])->get();
+        //return Department::whereNotIn('department_id', [3])->get();
+        return Department::whereIn('department_id', [2])->get();
     }
 
     /**
+     * Print a collection.
+     *
      * @param $collection
      * @param $field
      * @param string $separator
@@ -132,5 +155,13 @@ class EbreEscoolMigrator implements Migrator
         return $collection->implode($field, $separator);
     }
 
-
+    /**
+     * Truncate scool database.
+     */
+    private function truncate()
+    {
+        config(['database.default' => env('DB_SCOOL_CONNECTION', 'scool')]);
+        Submodule::truncate();
+        config(['database.default' => env('DB_EBRE_ESCOOL_CONNECTION', 'ebre_escool')]);
+    }
 }
