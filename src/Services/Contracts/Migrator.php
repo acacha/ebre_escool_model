@@ -3,15 +3,20 @@
 namespace Scool\EbreEscoolModel\Services\Contracts;
 
 /**
- * Interface Migrator
+ * Interface Migrator.
+ *
  * @package Scool\EbreEscoolModel\Services\Contracts
  */
 interface Migrator
 {
+
     /**
-     * Migrates
+     * Migrates old database to new database.
+     *
+     * @param array $filters
+     * @return mixed
      */
-    public function migrate();
+    public function migrate(array $filters);
 
     /**
      * Set output.
@@ -20,4 +25,14 @@ interface Migrator
      * @return mixed
      */
     public function setOutput(Output $output);
+
+    /**
+     * Set verbose.
+     *
+     * @param boolean $verbose
+     * @return mixed
+     */
+    public function setVerbose($verbose);
+
+
 }

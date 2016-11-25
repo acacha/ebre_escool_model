@@ -3,11 +3,20 @@
 namespace Scool\EbreEscoolModel;
 
 /**
- * Class Department
+ * Class Department.
+ *
  * @package Scool\EbreEscoolModel
  */
 class Department extends Model
 {
+
+    /**
+     * Database connection name.
+     *
+     * @var string
+     */
+    protected $connection = 'ebre_escool';
+
     /**
      * Get all studies related to deparment for all academic periods.
      */
@@ -33,6 +42,17 @@ class Department extends Model
     public function studiesActiveOn($period)
     {
         return $this->allStudies()->activeOn($period);
+    }
+
+    /**
+     * Dynamically retrieve attributes on the model.
+     *
+     * @param  string  $key
+     * @return mixed
+     */
+    public function __get($key)
+    {
+        return $this->getAttribute($key) ?: $this->getAttribute('department_' .$key) ;
     }
 
 }

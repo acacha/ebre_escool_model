@@ -12,6 +12,8 @@ use Scool\EbreEscoolModel\Traits\Periodable;
 class StudySubModuleAcademicPeriod extends EloquentModel
 {
 
+    protected $connection = 'ebre_escool';
+
     /**
      * @var string
      */

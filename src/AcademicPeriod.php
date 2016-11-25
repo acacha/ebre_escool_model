@@ -11,6 +11,9 @@ use Scool\EbreEscoolModel\Traits\Ebrescoolable;
  */
 class AcademicPeriod extends EloquentModel
 {
+
+    protected $connection = 'ebre_escool';
+
     use Ebrescoolable;
 
     /**

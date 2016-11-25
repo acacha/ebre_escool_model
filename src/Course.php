@@ -10,6 +10,8 @@ use Scool\EbreEscoolModel\Traits\Periodable;
  */
 class Course extends Model implements HasPeriods
 {
+    protected $connection = 'ebre_escool';
+
     use Periodable;
 
     /**
@@ -35,6 +37,14 @@ class Course extends Model implements HasPeriods
     public function studySimple()
     {
         return $this->belongsTo(Study::class, 'course_study_id', 'studies_id');
+    }
+
+    /**
+     * Get the study that owns the course.
+     */
+    public function study()
+    {
+        return $this->studySimple();
     }
 
     /**

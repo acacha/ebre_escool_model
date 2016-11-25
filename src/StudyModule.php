@@ -13,6 +13,8 @@ class StudyModule extends EloquentModel
 {
     use Periodable;
 
+    protected $connection = 'ebre_escool';
+
     /**
      * @var string
      */
@@ -52,10 +54,39 @@ class StudyModule extends EloquentModel
      */
     public function getAttributeInPeriod($key)
     {
-        if ($attribute = $this->modulesByPeriod()->active()->first()->getAttribute($key)) {
-            return $attribute;
+        if ($module = $this->getActiveModule()) {
+            if ($attribute = $module->getAttribute($key)) {
+                return $attribute;
+            }
+            if ($attribute = $module->getAttribute('study_module_academic_periods_' .$key)) {
+                return $attribute;
+            }
         }
-        return $this->modulesByPeriod()->active()->first()->getAttribute('study_module_academic_periods_' .$key);
+        return '';
+    }
+
+    /**
+     * Get active module.
+     *
+     * @return mixed
+     */
+    public function getActiveModule()
+    {
+        return $this->modulesByPeriod()->active()->first();
+    }
+
+    /**
+     * Get courses related to study modules.
+     */
+    public function courses() {
+        $this->getActiveModule()->courses();
+    }
+
+    /**
+     * Get study related to study module.
+     */
+    public function study() {
+        $this->getActiveModule()->courses()->first()->study();
     }
 
     /**
@@ -79,6 +110,12 @@ class StudyModule extends EloquentModel
             'study_module_academic_periods_study_module_id', 'study_module_academic_periods_academic_period_id');
     }
 
+    /**
+     *
+     * get study submodules associated to this study module.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
     public function submodules()
     {
         return $this->hasMany(StudySubModule::class,

@@ -7,7 +7,8 @@ use Scool\EbreEscoolModel\Services\Contracts\Migrator;
 use Scool\EbreEscoolModel\Services\Contracts\Output;
 
 /**
- * Class MigrateEbreEscool
+ * Class MigrateEbreEscool.
+ *
  * @package Scool\EbreEscoolModel\Console\Commands
  */
 class MigrateEbreEscool extends Command implements Output
@@ -17,7 +18,7 @@ class MigrateEbreEscool extends Command implements Output
      *
      * @var string
      */
-    protected $signature = 'scool:migrate';
+    protected $signature = "scool:migrate {filters* : filters to apply} {--debug}";
 
     /**
      * The console command description.
@@ -49,6 +50,7 @@ class MigrateEbreEscool extends Command implements Output
      */
     public function handle()
     {
-        $this->migrator->migrate();
+        $this->migrator->setVerbose($this->option('debug'));
+        $this->migrator->migrate($this->argument('filters'));
     }
 }

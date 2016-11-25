@@ -6,9 +6,18 @@ use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Support\Str;
 use Scool\EbreEscoolModel\Traits\Ebrescoolable;
 
+/**
+ * Class Model
+ * @package Scool\EbreEscoolModel
+ */
 class Model extends EloquentModel
 {
     use Ebrescoolable;
+
+    /**
+     * @var string
+     */
+    protected $connection = 'ebre_escool';
 
     /**
      * Get the primary key for the model.

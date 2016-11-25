@@ -12,6 +12,8 @@ use Scool\EbreEscoolModel\Traits\Periodable;
 class StudyModuleAcademicPeriod extends EloquentModel
 {
 
+    protected $connection = 'ebre_escool';
+
     /**
      * @var string
      */
@@ -90,5 +92,13 @@ class StudyModuleAcademicPeriod extends EloquentModel
             'study_module_academic_periods_academic_period_id',
             $period
         );
+    }
+
+    /**
+     * The courses that belong to the study module.
+     */
+    public function courses()
+    {
+        return $this->belongsToMany(Course::class, 'study_module_ap_courses', 'study_module_ap_courses_study_module_ap_id', 'study_module_ap_courses_course_id');
     }
 }

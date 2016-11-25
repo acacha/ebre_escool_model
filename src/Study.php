@@ -14,6 +14,8 @@ class Study extends EloquentModel implements HasPeriods
 {
     use Periodable;
 
+    protected $connection = 'ebre_escool';
+
     /**
      * The table associated with the model.
      *

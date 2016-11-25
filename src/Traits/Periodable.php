@@ -24,6 +24,7 @@ trait Periodable
 
     /**
      * Only studies active for given period.
+     *
      * @param \Illuminate\Database\Eloquent\Builder $query
      * @param $period
      * @return mixed

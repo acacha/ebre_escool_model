@@ -16,6 +16,11 @@ class StudySubModule extends EloquentModel
     /**
      * @var string
      */
+    protected $connection = 'ebre_escool';
+
+    /**
+     * @var string
+     */
     protected $table = 'study_submodules';
 
     /**
@@ -52,10 +57,13 @@ class StudySubModule extends EloquentModel
      */
     public function getAttributeInPeriod($key)
     {
-        if ($attribute = $this->modulesByPeriod()->active()->first()->getAttribute($key)) {
-            return $attribute;
+        if ($moduleByPeriod = $this->modulesByPeriod()->active()->first()) {
+            if ($attribute = $moduleByPeriod->getAttribute($key)) {
+                return $attribute;
+            }
+            return $moduleByPeriod->getAttribute('study_module_academic_periods_' .$key);
         }
-        return $this->modulesByPeriod()->active()->first()->getAttribute('study_module_academic_periods_' .$key);
+        return '';
     }
 
     /**
@@ -79,4 +87,11 @@ class StudySubModule extends EloquentModel
             'study_submodules_academic_periods_study_submodules_id', 'study_submodules_academic_periods_academic_period_id');
     }
 
+    /**
+     * Get the study module that owns the study submodule.
+     */
+    public function module()
+    {
+        return $this->belongsTo(StudyModule::class, 'study_submodules_study_module_id', 'study_module_id');
+    }
 }
