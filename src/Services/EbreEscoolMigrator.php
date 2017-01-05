@@ -3,12 +3,26 @@
 namespace Scool\EbreEscoolModel\Services;
 
 use Illuminate\Database\QueryException;
+use Scool\Curriculum\Models\Classroom;
 use Scool\Curriculum\Models\Module;
 use Scool\Curriculum\Models\Submodule;
 use Scool\EbreEscoolModel\AcademicPeriod;
+use Scool\EbreEscoolModel\ClassroomGroup;
 use Scool\EbreEscoolModel\Course;
 use Scool\EbreEscoolModel\Department;
 use Scool\Curriculum\Models\Department as ScoolDepartment;
+use Scool\Curriculum\Models\Study as ScoolStudy;
+use Scool\Curriculum\Models\Course as ScoolCourse;
+use Scool\Curriculum\Models\Module as ScoolModule;
+use Scool\Curriculum\Models\Submodule as ScoolSubmodule;
+use Scool\EbreEscoolModel\Enrollment;
+use Scool\EbreEscoolModel\Exceptions\ClassroomNotFoundByNameException;
+use Scool\EbreEscoolModel\Exceptions\CourseNotFoundByNameException;
+use Scool\EbreEscoolModel\Exceptions\ModuleNotFoundByNameException;
+use Scool\EbreEscoolModel\Exceptions\StudyNotFoundByNameException;
+use Scool\EbreEscoolModel\Exceptions\SubmoduleNotFoundByNameException;
+use Scool\Enrollment\Models\Enrollment as ScoolEnrollment;
+use Scool\Enrollment\Models\EnrollmentSubmodule as ScoolEnrollmentSubmodule;
 use Scool\EbreEscoolModel\Exceptions\InvalidNumberOfItemsException;
 use Scool\EbreEscoolModel\Location;
 use Scool\Foundation\Location as ScoolLocation;
@@ -79,29 +93,6 @@ class EbreEscoolMigrator implements Migrator
     protected $department;
 
     /**
-     * @return ScoolDepartment
-     */
-    public function getScoolDepartment()
-    {
-        return $this->scoolDepartment;
-    }
-
-    /**
-     * @param ScoolDepartment $scoolDepartment
-     */
-    public function setScoolDepartment($scoolDepartment)
-    {
-        $this->scoolDepartment = $scoolDepartment;
-    }
-
-    /**
-     * Scool department is used at current migration process.
-     *
-     * @var ScoolDepartment
-     */
-    protected $scoolDepartment;
-
-    /**
      * Study is used at current migration process.
      *
      * @var Study
@@ -121,6 +112,138 @@ class EbreEscoolMigrator implements Migrator
      * @var StudyModule
      */
     protected $module;
+
+    /**
+     * Study module is used at current migration process.
+     *
+     * @var StudySubModule
+     */
+    protected $submodule;
+
+    /**
+     * Scool department is used at current migration process.
+     *
+     * @var ScoolDepartment
+     */
+    protected $scoolDepartment;
+
+    /**
+     * Scool study is used at current migration process.
+     *
+     * @var ScoolStudy
+     */
+    protected $scoolStudy;
+
+    /**
+     * Scool course is used at current migration process.
+     *
+     * @var ScoolCourse
+     */
+    protected $scoolCourse;
+
+    /**
+     * Scool study module is used at current migration process.
+     *
+     * @var ScoolModule
+     */
+    protected $scoolModule;
+
+    /**
+     * Scool study module is used at current migration process.
+     *
+     * @var ScoolSubmodule
+     */
+    protected $scoolSubmodule;
+
+    /**
+     * EbreEscoolMigrator constructor.
+     *
+     * @param Output $output
+     */
+    public function __construct(Output $output = null)
+    {
+        $this->output = $output;
+    }
+
+    /**
+     * @return ScoolDepartment
+     */
+    public function getScoolDepartment()
+    {
+        return $this->scoolDepartment;
+    }
+
+    /**
+     * @param ScoolDepartment $scoolDepartment
+     */
+    public function setScoolDepartment($scoolDepartment)
+    {
+        $this->scoolDepartment = $scoolDepartment;
+    }
+
+    /**
+     * @return ScoolStudy
+     */
+    public function getScoolStudy()
+    {
+        return $this->scoolStudy;
+    }
+
+    /**
+     * @param ScoolStudy $scoolStudy
+     */
+    public function setScoolStudy($scoolStudy)
+    {
+        $this->scoolStudy = $scoolStudy;
+    }
+
+    /**
+     * @return ScoolCourse
+     */
+    public function getScoolCourse()
+    {
+        return $this->scoolCourse;
+    }
+
+    /**
+     * @param ScoolCourse $scoolCourse
+     */
+    public function setScoolCourse($scoolCourse)
+    {
+        $this->scoolCourse = $scoolCourse;
+    }
+
+    /**
+     * @return Module
+     */
+    public function getScoolModule()
+    {
+        return $this->scoolModule;
+    }
+
+    /**
+     * @param Module $scoolModule
+     */
+    public function setScoolModule($scoolModule)
+    {
+        $this->scoolModule = $scoolModule;
+    }
+
+    /**
+     * @return ScoolSubmodule
+     */
+    public function getScoolSubmodule()
+    {
+        return $this->scoolSubmodule;
+    }
+
+    /**
+     * @param ScoolSubmodule $scoolSubmodule
+     */
+    public function setScoolSubmodule($scoolSubmodule)
+    {
+        $this->scoolSubmodule = $scoolSubmodule;
+    }
 
     /**
      * @return Department
@@ -187,13 +310,19 @@ class EbreEscoolMigrator implements Migrator
     }
 
     /**
-     * EbreEscoolMigrator constructor.
-     *
-     * @param Output $output
+     * @return StudySubModule
      */
-    public function __construct(Output $output = null)
+    public function getSubmodule()
     {
-        $this->output = $output;
+        return $this->submodule;
+    }
+
+    /**
+     * @param StudySubModule $submodule
+     */
+    public function setSubmodule($submodule)
+    {
+        $this->submodule = $submodule;
     }
 
     /**
@@ -208,6 +337,8 @@ class EbreEscoolMigrator implements Migrator
     }
 
     /**
+     * Set verbose.
+     *
      * @param mixed $verbose
      * @return mixed|void
      */
@@ -233,7 +364,9 @@ class EbreEscoolMigrator implements Migrator
             $this->truncate();
 //            $this->migrateTeachers();
 //            $this->migrateLocations();
-            $this->migrateCurriculum();
+//            $this->migrateCurriculum();
+//            $this->migrateClassrooms();
+            $this->migrateEnrollments();
        }
     }
 
@@ -268,7 +401,164 @@ class EbreEscoolMigrator implements Migrator
     }
 
     /**
+     * Migrate ebre-escool enrollment to scool enrollment.
      *
+     * @param $enrollment
+     */
+    protected function migrateEnrollment($enrollment)
+    {
+        $user = $this->migratePerson($enrollment->person);
+        try {
+            $enrollment = ScoolEnrollment::firstOrNew([
+                'user_id'      => $user->id,
+                'study_id'     => $this->translateStudyId($enrollment->study_id),
+                'course_id'    => $this->translateCourseId($enrollment->course_id),
+                'classroom_id' => $this->translateClassroomId($enrollment->group_id)
+            ]);
+            $enrollment->state='Validated';
+            $enrollment->save();
+            return $enrollment;
+        } catch (\Exception $e) {
+            $this->output->error(
+                'Error migrating enrollment. ' . class_basename($e) . ' ' .  $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Migrate ebre-escool enrollment detail to scool enrollment.
+     */
+    protected function migrateEnrollmentDetail($enrollmentDetail,$enrollment_id)
+    {
+        try {
+            $enrollment = ScoolEnrollmentSubmodule::firstOrNew([
+                'enrollment_id' => $enrollment_id,
+                'module_id'     => $this->translateModuleId($enrollmentDetail->moduleid),
+                'submodule_id'  => $this->translateSubmoduleId($enrollmentDetail->submoduleid),
+            ]);
+            $enrollment->state='Validated';
+            $enrollment->save();
+        } catch (\Exception $e) {
+            $this->output->error(
+                'Error migrating enrollment detail. ' . class_basename($e) . ' ' .  $e->getMessage());
+        }
+    }
+
+    /**
+     * Translate module id.
+     *
+     * @param $oldModuleId
+     * @return
+     * @throws ModuleNotFoundByNameException
+     */
+    protected function translateModuleId($oldModuleId)
+    {
+        $module = Module::where('name',StudyModule::findOrFail($oldModuleId)->name)->first();
+        if ( $module != null ) {
+            return $module->id;
+        }
+        throw new ModuleNotFoundByNameException();
+    }
+
+    /**
+     * Translate submodule id.
+     *
+     * @param $oldSubModuleId
+     * @return
+     * @throws SubmoduleNotFoundByNameException
+     */
+    protected function translateSubmoduleId($oldSubModuleId)
+    {
+        $submodule = Submodule::where('name',StudySubModule::findOrFail($oldSubModuleId)->name)->first();
+        if ( $submodule != null ) {
+            return $submodule->id;
+        }
+        throw new SubmoduleNotFoundByNameException();
+    }
+
+
+    /**
+     * Translate old ebre-escool study id to scool id.
+     *
+     * @param $oldStudyId
+     * @return mixed
+     * @throws StudyNotFoundByNameException
+     */
+    protected function translateStudyId($oldStudyId)
+    {
+        $study = ScoolStudy::where('name',Study::findOrFail($oldStudyId)->name)->first();
+        if ( $study != null ) {
+            return $study->id;
+        }
+        throw new StudyNotFoundByNameException();
+    }
+
+    /**
+     * Translate old ebre-escool course id to scool id.
+     *
+     * @param $oldCourseId
+     * @return mixed
+     * @throws CourseNotFoundByNameException
+     */
+    protected function translateCourseId($oldCourseId)
+    {
+        $course = ScoolCourse::where('name',Course::findOrFail($oldCourseId)->name)->first();
+        if ( $course != null ) {
+            return $course->id;
+        }
+        throw new CourseNotFoundByNameException();
+    }
+
+    /**
+     * Translate old ebre-escool classroom id to scool id.
+     *
+     * @param $oldClassroomId
+     * @return integer
+     * @throws ClassroomNotFoundByNameException
+     */
+    protected function translateClassroomId($oldClassroomId)
+    {
+        $classroom = Classroom::where('name',ClassroomGroup::findOrFail($oldClassroomId)->name)->first();
+        if ( $classroom != null ) {
+            return $classroom->id;
+        }
+        throw new ClassroomNotFoundByNameException();
+    }
+
+    /**
+     * Migrate ebre-escool person to scool person.
+     *
+     * @param $person
+     */
+    protected function migratePerson($person)
+    {
+        //TODO create person in personal data table
+        $user = User::firstOrNew([
+            'email' => $person->email,
+        ]);
+        $user->name = $person->name;
+        $user->password = bcrypt('secret');
+        $user->remember_token = str_random(10);
+        $user->save();
+        return $user;
+    }
+
+    /**
+     * Migrate classrooms.
+     */
+    protected function migrateClassrooms()
+    {
+        $this->output->info('### Migrating classrooms ###');
+        foreach ($classrooms = $this->classrooms() as $classroom) {
+            $this->showMigratingInfo($classroom, 1);
+            $this->migrateClassroom($classroom);
+        }
+        $this->output->info(
+            '### END Migrating classrooms. Migrated ' . count($classrooms) .  ' locations   ###');
+    }
+
+    /**
+     * Migrate locations.
      */
     protected function migrateLocations()
     {
@@ -282,39 +572,67 @@ class EbreEscoolMigrator implements Migrator
     }
 
     /**
-     * @param $location
+     * Migrate location.
+     *
+     * @param $srcLocation
      */
-    protected function migrateLocation($location) {
-        $user = ScoolLocation::firstOrNew([
-            'name' => $location->name,
+    protected function migrateLocation($srcLocation) {
+        $location = ScoolLocation::firstOrNew([
+            'name' => $srcLocation->name,
         ]);
-        $user->save();
-        $user->shortname = $location->shortname;
-        $user->description = $location->description;
-        $user->code = $location->external_code;
+        $location->save();
+        $location->shortname = $srcLocation->shortName;
+        $location->description = $srcLocation->description;
+        $location->code = $srcLocation->external_code;
     }
+
+    /**
+     * Migrate classroom.
+     *
+     * @param $srcClassroom
+     */
+    protected function migrateClassroom($srcClassroom) {
+        $classroom = Classroom::firstOrNew([
+            'name' => $srcClassroom->name,
+        ]);
+        $classroom->save();
+        $this->addCourseToClassroom($classroom, $srcClassroom->course_id);
+        $classroom->shortname = $srcClassroom->shortName;
+        $classroom->description = $srcClassroom->description;
+        $classroom->code = $srcClassroom->external_code;
+    }
+
+
 
     /**
      * Migrate curriculum.
      */
     private function migrateCurriculum()
     {
-        $level= 0;
         foreach ($this->departments() as $department) {
             $this->setDepartment($department);
-            $this->showMigratingInfo($department,++$level);
+            $this->showMigratingInfo($department,1);
             $this->migrateDepartment($department);
             foreach ($this->studies($department) as $study) {
                 $this->setStudy($study);
-                $this->showMigratingInfo($study,++$level);
+                $this->showMigratingInfo($study,2);
+                $this->migrateStudy($study);
+                $this->addStudyToDeparment();
                 foreach ($this->courses($study) as $course) {
                     $this->setCourse($course);
-                    $this->showMigratingInfo($course,++$level);
+                    $this->showMigratingInfo($course,3);
+                    $this->migrateCourse($course);
+                    $this->addCourseToStudy();
                     foreach ($this->modules($course) as $module) {
                         $this->setModule($module);
-                        $this->showMigratingInfo($module, ++$level);
+                        $this->showMigratingInfo($module, 4);
+                        $this->migrateModule($module);
+                        $this->addModuleToCourse();
                         foreach ($this->submodules($module) as $submodule) {
+                            $this->setSubmodule($submodule);
+                            $this->showMigratingInfo($submodule, 5);
                             $this->migrateSubmodule($submodule);
+                            $this->addSubModuleToModule();
                         }
                     }
                 }
@@ -323,24 +641,134 @@ class EbreEscoolMigrator implements Migrator
     }
 
     /**
+     * Migrate enrollment.
+     */
+    private function migrateEnrollments()
+    {
+        foreach ($this->enrollments() as $enrollment) {
+            $enrollment->showMigratingInfo($this->output,1);
+            $newEnrollment = $this->migrateEnrollment($enrollment);
+            if ($newEnrollment) $this->migrateEnrollmentDetails($enrollment, $newEnrollment);
+        }
+    }
+
+    /**
+     * Migrate enrollment details (enrollment modules/submodules).
+     *
+     * @param $oldEnrollment
+     * @param $newEnrollment
+     * @internal param $enrollment
+     */
+    protected function migrateEnrollmentDetails($oldEnrollment,$newEnrollment)
+    {
+        foreach ($this->enrollmentDetails($oldEnrollment) as $enrollmentDetail) {
+            $enrollmentDetail->showMigratingInfo($this->output,2);
+            $this->migrateEnrollmentDetail($enrollmentDetail,$newEnrollment->id);
+        }
+    }
+
+    /**
+     * Obtain all ebre_escool_enrollments
+     */
+    private function enrollments()
+    {
+        return $this->validateCollection(
+            Enrollment::activeOn(
+                AcademicPeriod::findOrFail($this->period)->shortname)
+            )->orderBy(
+                'enrollment_study_id',
+                'enrollment_course_id',
+                'enrollment_group_id')->get();
+    }
+
+    /**
+     * Get enrollment details.
+     *
+     * @param $enrollment
+     * @return mixed
+     */
+    protected function enrollmentDetails($enrollment)
+    {
+        return $this->validateCollection(
+            $enrollment->details
+        );
+    }
+
+
+    /**
+     * Migrate department.
+     *
      * @param Department $department
      */
     protected function migrateDepartment(Department $department) {
 
         $this->setScoolDepartment(
-            $this->createDepartment(Department::findOrFail($department->parent_department_id))
+            $this->createDepartment($department)
         );
     }
 
     /**
-     * Create scool department using ebre-escool department.
-     * 
+     * Migrate study.
+     *
+     * @param Study $study
+     */
+    protected function migrateStudy(Study $study)
+    {
+        $this->setScoolStudy(
+            $this->createStudy($study)
+        );
+    }
+
+    /**
+     * Migrate course.
+     *
+     * @param Course $course
+     */
+    protected function migrateCourse(Course $course)
+    {
+        $this->setScoolCourse(
+            $this->createCourse($course)
+        );
+    }
+
+    /**
+     * Migrate module.
+     *
+     * @param StudyModuleAcademicPeriod $module
+     */
+    public function migrateModule(StudyModuleAcademicPeriod $module)
+    {
+        try {
+            $this->setScoolModule(
+                $this->createModule($module)
+            );
+        } catch (\LogicException $le) {
+            $this->output->error($le->getMessage());
+        }
+
+    }
+
+    /**
+     * Migrate submodule.
+     *
+     * @param StudySubModule $srcSubmodule
+     */
+    public function migrateSubmodule($srcSubmodule)
+    {
+        $this->setScoolSubmodule(
+            $this->createSubModule($srcSubmodule)
+        );
+    }
+
+    /**
+     * Create scool study using ebre-escool study.
+     *
      * @param Department $srcDepartment
      * @return mixed
      */
     protected function createDepartment(Department $srcDepartment)
     {
-         $department = ScoolDepartment::firstOrNew([
+        $department = ScoolDepartment::firstOrNew([
             'name'         => $srcDepartment->name,
         ]);
         $department->location_id = $this->getLocation($srcDepartment->location_id)->id;
@@ -350,6 +778,90 @@ class EbreEscoolMigrator implements Migrator
 
         return $department;
 
+    }
+
+    /**
+     * Create scool study using ebre-escool study.
+     * 
+     * @param Study $srcStudy
+     * @return mixed
+     */
+    protected function createStudy(Study $srcStudy)
+    {
+         $study = ScoolStudy::firstOrNew([
+            'name'         => $srcStudy->name,
+        ]);
+        $study->law_id = $this->mapLaws($srcStudy->studies_law_id);
+        $study->save();
+        $study->shortname = $srcStudy->shortname;
+        $study->description = $srcStudy->description;
+
+        return $study;
+    }
+
+    /**
+     * Create scool course using ebre-escool course.
+     *
+     * @param Course $srcCourse
+     * @return mixed
+     */
+    protected function createCourse(Course $srcCourse)
+    {
+        $course = ScoolCourse::firstOrNew([
+            'name'         => $srcCourse->name,
+        ]);
+        $course->save();
+        $course->shortname = $srcCourse->shortname;
+        $course->description = $srcCourse->description;
+
+        return $course;
+    }
+
+    /**
+     * Create scool study module using ebre-escool study module.
+     *
+     * @param StudyModuleAcademicPeriod $studyModule
+     * @return mixed
+     * @throws \Exception
+     */
+    protected function createModule(StudyModuleAcademicPeriod $studyModule)
+    {
+        $module = ScoolModule::firstOrNew([
+            'name'         => $studyModule->name,
+            'study_id'     => $this->getScoolStudy()->id
+        ]);
+        if($studyModule->study_shortname != $this->getScoolStudy()->shortname) {
+            throw new \LogicException(
+                'study_shortname in Ebre-escool study module (' . $studyModule->study_shortname
+                . ") doesn't match study shortname (" . $this->getScoolStudy()->shortname . ')');
+        }
+        $module->save();
+        $module->order = $studyModule->order;
+        $module->shortname = $studyModule->shortname;
+        $module->description = $studyModule->description;
+        return $module;
+    }
+
+    /**
+     * Create scool study submodule using ebre-escool study submodule.
+     *
+     * @param StudySubModule $srcSubmodule     *
+     * @return ScoolSubmodule
+     */
+    protected function createSubmodule(StudySubModule $srcSubmodule)
+    {
+        $submodule = new Submodule();
+        $submodule->name = $srcSubmodule->name;
+        $submodule->order = $srcSubmodule->order;
+        $submodule->type = $this->mapTypes($srcSubmodule->type->id);
+        $submodule->save();
+        $submodule->altnames = [
+            'shortname'   => $srcSubmodule->shortname,
+            'description' => $srcSubmodule->description
+        ];
+
+        $submodule->addModule($this->getScoolModule());
+        return $submodule;
     }
 
     /**
@@ -394,33 +906,47 @@ class EbreEscoolMigrator implements Migrator
     }
 
     /**
-     * @param StudySubModule $srcSubmodule
+     * Map ebre_escool law to scool law
+     *
+     * @param $law
+     * @return int
      */
-    public function migrateSubmodule($srcSubmodule)
+    protected function mapLaws($law)
     {
-        $submodule = new Submodule();
-        $submodule->name = $srcSubmodule->name;
-        $submodule->order = $srcSubmodule->order;
-        $submodule->type = $srcSubmodule->type;
-        $submodule->save();
-        $submodule->altnames = [
-            'shortname' => $srcSubmodule->shortname,
-            'description' => $srcSubmodule->description
-        ];
+        switch ($law) {
+            case 1:
+                return 1;
+            case 2:
+                return 2;
+        }
+        throw new \InvalidArgumentException();
+    }
 
-        $module = StudyModule::findOrFail($srcSubmodule->module_id);
-        Module::firstOrCreate([
-            'name' => $module->name,
-            'order' => $module->order,
-            'study_id' => $module->study->id,
-        ]);
-        $submodule->addModule($module);
+    /**
+     * Map ebre_escool study module types to scool types
+     *
+     * @param $type
+     * @return int
+     */
+    protected function mapTypes($type)
+    {
+        switch ($type) {
+            case 1:
+                return 1;
+            case 2:
+                return 2;
+            case 3:
+                return 3;
+            case 4:
+                return 4;
+        }
+        throw new \InvalidArgumentException();
     }
 
     /**
      * Get academic periods.
      *
-     * @return \Illuminate\Database\Eloquent\Collection|static[]
+     * @return \Illuminate\Database\Eloquent\Collection|\Illuminate\Support\Collection|static[]
      */
     protected function academicPeriods()
     {
@@ -439,7 +965,7 @@ class EbreEscoolMigrator implements Migrator
     /**
      * Get the teachers to migrate.
      *
-     * @return \Illuminate\Database\Eloquent\Collection|static[]
+     * @return mixed
      */
     protected function teachers()
     {
@@ -457,24 +983,33 @@ class EbreEscoolMigrator implements Migrator
     }
 
     /**
+     * Get classrooms to migrate.
+     *
+     * @return mixed
+     */
+    protected function classrooms()
+    {
+        return $this->validateCollection(ClassroomGroup::all());
+    }
+
+    /**
      * Get the departments to migrate.
      *
-     * @return \Illuminate\Database\Eloquent\Collection|static[]
+     * @return \Illuminate\Support\Collection|mixed
      */
     protected function departments()
     {
         //Avoid using FOL because is a transversal department
         if ( ! $this->filtersAppliedToDepartments()) return $this->validateCollection(Department::whereNotIn('department_id', [3])->get());
-
         if ( ! is_numeric($this->filters[1]) )  throw new \InvalidArgumentException();
-        return collect(Department::findOrFail(intval($this->filters[1])));
+        return collect([Department::findOrFail(intval($this->filters[1]))]);
     }
 
     /**
      * Get the studies to migrate.
      *
      * @param Department $department
-     * @return \Illuminate\Database\Eloquent\Collection|static[]
+     * @return mixed
      */
     protected function studies(Department $department) {
         return $this->validateCollection($department->studiesActiveOn($this->period)->get());
@@ -484,7 +1019,7 @@ class EbreEscoolMigrator implements Migrator
      * Get the courses to migrate.
      *
      * @param Study $study
-     * @return \Illuminate\Database\Eloquent\Collection|static[]
+     * @return mixed
      */
     protected function courses(Study $study) {
         return $this->validateCollection($study->allCourses()->active()->get());
@@ -720,4 +1255,53 @@ class EbreEscoolMigrator implements Migrator
         );
         $this->switchConnection($env,$this->getDestinationConnection());
     }
+
+    /**
+     * Add current study to current department.
+     */
+    protected function addStudyToDeparment()
+    {
+        $this->getScoolDepartment()->studies()
+             ->syncWithoutDetaching([$this->getScoolStudy()->id]);
+    }
+
+    /**
+     * Add current course to current study.
+     */
+    protected function addCourseToStudy()
+    {
+        $this->getScoolStudy()->courses()
+             ->syncWithoutDetaching([$this->getScoolCourse()->id]);
+    }
+
+    /**
+     * Add current module to current course.
+     */
+    protected function addModuleToCourse()
+    {
+        $this->getScoolCourse()->modules()
+            ->syncWithoutDetaching([$this->getScoolModule()->id]);
+    }
+
+    /**
+     * Add current submodule to current module.
+     */
+    protected function addSubModuleToModule()
+    {
+        $this->getScoolModule()->submodules()
+             ->syncWithoutDetaching([$this->getScoolSubmodule()->id]);
+    }
+
+    /**
+     * Add course to classroom.
+     *
+     * @param $classroom
+     * @param $course_id
+     */
+    protected function addCourseToClassroom($classroom, $course_id)
+    {
+        $classroom->courses()
+            ->syncWithoutDetaching([$course_id]);
+    }
+
 }

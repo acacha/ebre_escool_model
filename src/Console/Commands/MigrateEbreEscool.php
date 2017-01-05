@@ -25,7 +25,7 @@ class MigrateEbreEscool extends Command implements Output
      *
      * @var string
      */
-    protected $description = 'Migrates EbreEscool old database';
+    protected $description = 'Migrates old EbreEscool database';
 
     /**
      * @var Migrator

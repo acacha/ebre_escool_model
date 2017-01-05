@@ -48,7 +48,7 @@ class Course extends Model implements HasPeriods
     }
 
     /**
-     * Ther periods associated to model.
+     * The periods associated to model.
      *
      * @return mixed
      */

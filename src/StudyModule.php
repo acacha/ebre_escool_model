@@ -123,4 +123,11 @@ class StudyModule extends EloquentModel
         );
     }
 
+    /**
+     * Get the module's type.
+     */
+    public function type()
+    {
+        return $this->belongsTo(StudyModuleType::class,'study_module_type', 'study_module_type_id');
+    }
 }

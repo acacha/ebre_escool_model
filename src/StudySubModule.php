@@ -54,6 +54,7 @@ class StudySubModule extends EloquentModel
      * Search for attribute in current period.
      *
      * @param $key
+     * @return string
      */
     public function getAttributeInPeriod($key)
     {
@@ -93,5 +94,16 @@ class StudySubModule extends EloquentModel
     public function module()
     {
         return $this->belongsTo(StudyModule::class, 'study_submodules_study_module_id', 'study_module_id');
+    }
+
+    /**
+     * Get the type of submodule.
+     *
+     * @param  string  $value
+     * @return StudyModuleType
+     */
+    public function getTypeAttribute($value)
+    {
+        return $this->module->type;
     }
 }

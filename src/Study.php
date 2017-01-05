@@ -31,17 +31,6 @@ class Study extends EloquentModel implements HasPeriods
     protected $primaryKey = 'studies_id';
 
     /**
-     * The "booting" method of the model.
-     *
-     * @return void
-     */
-    protected static function boot()
-    {
-        parent::boot();
-
-    }
-
-    /**
      * Dynamically retrieve attributes on the model.
      *
      * @param  string  $key

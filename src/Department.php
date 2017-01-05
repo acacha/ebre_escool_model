@@ -18,7 +18,7 @@ class Department extends Model
     protected $connection = 'ebre_escool';
 
     /**
-     * Get all studies related to deparment for all academic periods.
+     * Get all studies related to department for all academic periods.
      */
     public function allStudies()
     {
