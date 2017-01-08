@@ -1184,7 +1184,6 @@ class EbreEscoolMigrator implements Migrator
         if ($id != null) {
             $submodule = Submodule::findOrFail($id);
         } else {
-            dd("New");
             $submodule = new Submodule();
         }
 
@@ -1210,7 +1209,6 @@ class EbreEscoolMigrator implements Migrator
     {
         $module = $this->getScoolModule();
         foreach ($module->submodules as $submodule) {
-//            dd($submodule->name . " | " . $srcSubmodule->name);
             if ($submodule->name == $srcSubmodule->name ) return $submodule->id;
         }
         return null;

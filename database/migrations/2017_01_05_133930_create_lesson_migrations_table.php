@@ -33,6 +33,6 @@ class CreateLessonMigrationsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('lesson_migration');
+        Schema::connection('ebre_escool')->dropIfExists('lesson_migration');
     }
 }
