@@ -2,7 +2,10 @@
 
 namespace Scool\EbreEscoolModel\Services;
 
+use DB;
 use Illuminate\Database\QueryException;
+use Monolog\Handler\SocketHandler;
+use Schema;
 use Scool\Curriculum\Models\Classroom;
 use Scool\Curriculum\Models\Module;
 use Scool\Curriculum\Models\Submodule;
@@ -18,11 +21,18 @@ use Scool\Curriculum\Models\Submodule as ScoolSubmodule;
 use Scool\EbreEscoolModel\Enrollment;
 use Scool\EbreEscoolModel\Exceptions\ClassroomNotFoundByNameException;
 use Scool\EbreEscoolModel\Exceptions\CourseNotFoundByNameException;
+use Scool\EbreEscoolModel\Exceptions\LocationNotFoundByNameException;
 use Scool\EbreEscoolModel\Exceptions\ModuleNotFoundByNameException;
 use Scool\EbreEscoolModel\Exceptions\StudyNotFoundByNameException;
 use Scool\EbreEscoolModel\Exceptions\SubmoduleNotFoundByNameException;
+use Scool\EbreEscoolModel\Exceptions\TimeslotNotFoundByNameException;
+use Scool\EbreEscoolModel\Lesson;
+use Scool\EbreEscoolModel\LessonMigration;
+use Scool\EbreEscoolModel\Timeslot;
 use Scool\Enrollment\Models\Enrollment as ScoolEnrollment;
 use Scool\Enrollment\Models\EnrollmentSubmodule as ScoolEnrollmentSubmodule;
+use Scool\Timetables\Models\Day;
+use Scool\Timetables\Models\Lesson as ScoolLesson;
 use Scool\EbreEscoolModel\Exceptions\InvalidNumberOfItemsException;
 use Scool\EbreEscoolModel\Location;
 use Scool\Foundation\Location as ScoolLocation;
@@ -34,6 +44,8 @@ use Scool\EbreEscoolModel\StudyModuleAcademicPeriod;
 use Scool\EbreEscoolModel\StudySubModule;
 use Scool\EbreEscoolModel\Teacher;
 use Scool\Foundation\User;
+use Scool\Timetables\Models\Shift;
+use Scool\Timetables\Models\Timeslot as ScoolTimeSlot;
 
 /**
  * Class EbreEscoolMigrator.
@@ -361,12 +373,15 @@ class EbreEscoolMigrator implements Migrator
             $this->setDestinationConnectionByPeriod($this->period);
             $this->switchToDestinationConnection();
             $this->output->info('Migrating period: ' . $period->name . '(' .  $period->id . ')');
-            $this->truncate();
 //            $this->migrateTeachers();
 //            $this->migrateLocations();
-//            $this->migrateCurriculum();
+            $this->migrateCurriculum();
 //            $this->migrateClassrooms();
-            $this->migrateEnrollments();
+//            $this->migrateEnrollments();
+//            $this->seedDays();
+//            $this->seedShifts();
+//            $this->migrateTimeslots();
+//            $this->migrateLessons();
        }
     }
 
@@ -404,6 +419,7 @@ class EbreEscoolMigrator implements Migrator
      * Migrate ebre-escool enrollment to scool enrollment.
      *
      * @param $enrollment
+     * @return null
      */
     protected function migrateEnrollment($enrollment)
     {
@@ -426,7 +442,86 @@ class EbreEscoolMigrator implements Migrator
     }
 
     /**
+     * Migrate lesson.
+     *
+     */
+    protected function migrateLesson($oldLesson)
+    {
+            if ($this->lessonNotExists($oldLesson)) {
+                DB::beginTransaction();
+              try {
+                    $lesson = new ScoolLesson;
+                    $lesson->location_id = $this->translateLocationId($oldLesson->location_id);
+                    $lesson->day_id = $this->translateDayId($oldLesson->day);
+                    $lesson->timeslot_id = $this->translateTimeslotId($oldLesson->time_slot_id);
+                    $lesson->state='Validated';
+                    $lesson->save();
+                    $lesson->addTeacher($this->translateTeacher($oldLesson->teacher_id));
+                    $module = Module::findOrFail($this->translateModuleId($oldLesson->study_module_id));
+                    foreach ($module->submodules as $submodule) {
+                        $lesson->addSubmodule($submodule);
+                    }
+
+                    $classroom = Classroom::findOrFail($this->translateClassroomId($oldLesson->classroom_group_id));
+                    $lesson->addClassroom($classroom);
+
+                    $lesson_migration = new LessonMigration();
+                    $lesson_migration->newlesson_id = $lesson->id;
+                    $lesson_migration->lesson()->associate($oldLesson);
+                    $lesson_migration->save();
+                    DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                $this->output->error(
+                    'Error migrating lesson. ' . class_basename($e) . ' ' .  $e->getMessage());
+                return null;
+            }
+
+            }
+    }
+
+    /**
+     * Check if lesson is new or already exists.
+     *
+     * @param $oldLesson
+     * @return bool
+     */
+    protected function lessonNotExists($oldLesson)
+    {
+        if (LessonMigration::where('lesson_id',$oldLesson->id)->count() == 0) return true;
+        return false;
+    }
+
+    /**
+     * Migrate timeslot.
+     *
+     * @param $oldTimeslot
+     */
+    protected function migrateTimeslot($oldTimeslot)
+    {
+        $timeslot = ScoolTimeSlot::firstOrNew([
+            'init'    => $oldTimeslot->start_time,
+            'end'     => $oldTimeslot->end_time,
+            'lective' => $oldTimeslot->lective,
+
+            'order'   => $oldTimeslot->order,
+        ]);
+        if ( $oldTimeslot->order < 8 ) {
+            $timeslot->addShiftOnlyIfNotExists(Shift::where('name', 'Matí')->first());
+        }
+        if ( $oldTimeslot->order > 8 )
+        {
+            $timeslot->addShiftOnlyIfNotExists(Shift::where('name','Tarda')->first());
+        }
+
+        $timeslot->save();
+    }
+
+    /**
      * Migrate ebre-escool enrollment detail to scool enrollment.
+     *
+     * @param $enrollmentDetail
+     * @param $enrollment_id
      */
     protected function migrateEnrollmentDetail($enrollmentDetail,$enrollment_id)
     {
@@ -442,6 +537,77 @@ class EbreEscoolMigrator implements Migrator
             $this->output->error(
                 'Error migrating enrollment detail. ' . class_basename($e) . ' ' .  $e->getMessage());
         }
+    }
+
+    /**
+     * Translate from ebre_escool teacher id to scool user id.
+     *
+     * @param $id
+     * @return mixed
+     */
+    protected function translateTeacher($id)
+    {
+        return User::where('email', Teacher::findOrFail($id)->email)->firstOrFail();
+    }
+
+    /**
+     * Translate location id.
+     *
+     * @param $oldLocationId
+     * @return mixed
+     * @throws LocationNotFoundByNameException
+     */
+    protected function translateLocationId($oldLocationId)
+    {
+        $location = ScoolLocation::where('name',Location::findOrFail($oldLocationId)->name)->first();
+        if ( $location != null ) {
+            return $location->id;
+        }
+        throw new LocationNotFoundByNameException();
+    }
+
+    /**
+     * Translate day id.
+     *
+     * @param $oldDayId
+     * @return mixed
+     */
+    protected function translateDayId($oldDayId)
+    {
+        switch ($oldDayId) {
+            case 0:
+                return 0;
+            case 1:
+                return 1;
+            case 2:
+                return 2;
+            case 3:
+                return 3;
+            case 4:
+                return 4;
+            case 5:
+                return 5;
+            case 6:
+                return 6;
+            case 7:
+                return 7;
+        }
+    }
+
+    /**
+     * Translate timeslot id.
+     *
+     * @param $oldTimeslotId
+     * @return mixed
+     * @throws TimeslotNotFoundByNameException
+     */
+    protected function translateTimeslotId($oldTimeslotId)
+    {
+        $timeslot = ScoolTimeslot::where('order',Timeslot::findOrFail($oldTimeslotId)->order)->first();
+        if ( $timeslot != null ) {
+            return $timeslot->id;
+        }
+        throw new TimeslotNotFoundByNameException();
     }
 
     /**
@@ -645,11 +811,148 @@ class EbreEscoolMigrator implements Migrator
      */
     private function migrateEnrollments()
     {
+        $this->output->info('### Migrating enrollments ###');
         foreach ($this->enrollments() as $enrollment) {
             $enrollment->showMigratingInfo($this->output,1);
             $newEnrollment = $this->migrateEnrollment($enrollment);
             if ($newEnrollment) $this->migrateEnrollmentDetails($enrollment, $newEnrollment);
         }
+        $this->output->info('### END Migrating enrollments ###');
+    }
+
+    /**
+     * Seed days of the week with ISO-8601 numeric code.
+     */
+    protected function seedDays()
+    {
+        $this->output->info('### Seeding days###');
+        //%u	ISO-8601 numeric representation of the day of the week	1 (for Monday) through 7 (for Sunday)
+        $timestamp = strtotime('next Monday');
+        $days = array();
+        for ($i = 1; $i < 8; $i++) {
+            $days[$i] = strftime('%A', $timestamp);
+            $timestamp = strtotime('+1 day', $timestamp);
+        }
+
+        foreach ($days as $dayNumber => $day) {
+            $this->output->info('### Seeding day: ' . $day . ' ###');
+            $dayModel = Day::firstOrNew([
+                'code' => $dayNumber,
+                ]
+            );
+            $dayModel->name = $day;
+            $dayModel->code = $dayNumber;
+            $dayModel->lective = true;
+            if ($dayNumber == 6 || $dayNumber == 7) {
+                $dayModel->lective = false;
+            }
+            $dayModel->save();
+        }
+        $this->output->info('### END Seeding days###');
+    }
+
+    /**
+     * Seed shifts.
+     */
+    protected function seedShifts()
+    {
+        $this->output->info('### Seeding shifts###');
+        $this->output->info('Adding Matí shift...');
+        $shift = Shift::firstOrNew([
+                'name' => 'Matí'
+            ]
+        );
+        $shift->save();
+        $this->output->info('Adding Tarda shift...');
+        $shift = Shift::firstOrNew([
+                'name' => 'Tarda'
+            ]
+        );
+        $shift->save();
+        $this->output->info('### END Seeding shifts###');
+    }
+
+    /**
+     * Migrate timeslots.
+     */
+    protected function migrateTimeslots()
+    {
+        $this->output->info('### Migrating timeslots ###');
+        foreach ($this->timeslots() as $timeslot) {
+            $timeslot->showMigratingInfo($this->output,1);
+            $this->migrateTimeslot($timeslot);
+        }
+        $this->output->info('### END OF Migrating timeslots ###');
+    }
+
+    /**
+     * Migrate lessons.
+     */
+    protected function migrateLessons()
+    {
+        $this->output->info('### Migrating lessons ###');
+        if ($this->checkLessonsMigrationState()) {
+            foreach ($this->lessons() as $lesson) {
+                $lesson->showMigratingInfo($this->output,1);
+                $this->migrateLesson($lesson);
+            }
+        }
+        $this->output->info('### END OF Migrating lessons ###');
+    }
+
+    /**
+     * Check state of lessons migration.
+     *
+     * @return bool
+     */
+    protected function checkLessonsMigrationState()
+    {
+        $this->output->info('# Checkin lessons migration state... #');
+
+        switch ($this->checkLessonMigrationStats()) {
+            case 0:
+                return true;
+            case 1:
+                $this->output->error(' Migration stats does not match!');
+                if ($this->output->confirm('Do you wish to continue (lesson_migration and scool lesson tables will be truncated)?')) {
+                    DB::connection('ebre_escool')->statement('DELETE FROM lesson_migration');
+                    DB::connection('ebre_escool')->statement('ALTER TABLE lesson_migration AUTO_INCREMENT = 1');
+                    DB::statement('DELETE FROM lessons');
+                    DB::statement('ALTER TABLE lessons AUTO_INCREMENT = 1');
+                    DB::statement('DELETE FROM lesson_user');
+                    DB::statement('ALTER TABLE lesson_user AUTO_INCREMENT = 1');
+                    DB::statement('DELETE FROM lesson_submodule');
+                    DB::statement('ALTER TABLE lesson_submodule AUTO_INCREMENT = 1');
+                    DB::statement('DELETE FROM classroom_submodule');
+                    DB::statement('ALTER TABLE classroom_submodule AUTO_INCREMENT = 1');
+                } else {
+                    die();
+                }
+                return true;
+            case 2:
+                $this->output->info(' Lesson data seems already migrated. Skipping lessons migration...');
+                return false;
+        }
+    }
+
+    /**
+     * Check lesson migrations stats.
+     *
+     * @return bool
+     */
+    protected function checkLessonMigrationStats()
+    {
+        $numberOfOriginalLessons = Lesson::activeOn($this->period)->count();
+        $numberOfTrackedLessons = LessonMigration::all()->count();
+        $numberOfMigratedLessons = ScoolLesson::all()->count();
+        $this->output->info(' Original lessons: ' . $numberOfOriginalLessons);
+        $this->output->info(' Tracked migrated lessons (table lesson_migration): ' . $numberOfTrackedLessons );
+        $this->output->info(' Already migrated lessons: ' . $numberOfMigratedLessons);
+        if ($numberOfTrackedLessons == 0 && $numberOfMigratedLessons == 0) return 0;
+        if ( $numberOfOriginalLessons != $numberOfTrackedLessons ||
+             $numberOfTrackedLessons != $numberOfMigratedLessons) return 1;
+        if ( $numberOfOriginalLessons == $numberOfTrackedLessons ||
+            $numberOfTrackedLessons == $numberOfMigratedLessons) return 2;
     }
 
     /**
@@ -679,6 +982,32 @@ class EbreEscoolMigrator implements Migrator
                 'enrollment_study_id',
                 'enrollment_course_id',
                 'enrollment_group_id')->get();
+    }
+
+    /**
+     * Obtain all ebre_escool lessons to migrate.
+     */
+    protected function lessons()
+    {
+        return $this->validateCollection(
+            Lesson::activeOn($this->period)
+        )->orderBy(
+            'lesson_classroom_group_id',
+            'lesson_teacher_id',
+            'lesson_study_module_id'
+            )->get();
+    }
+
+    /**
+     * Obtain all timeslots to migrate.
+     *
+     * @return mixed
+     */
+    protected function timeslots()
+    {
+        return $this->validateCollection(
+            Timeslot::all()
+        );
     }
 
     /**
@@ -751,7 +1080,7 @@ class EbreEscoolMigrator implements Migrator
     /**
      * Migrate submodule.
      *
-     * @param StudySubModule $srcSubmodule
+     * @param $srcSubmodule
      */
     public function migrateSubmodule($srcSubmodule)
     {
@@ -774,7 +1103,7 @@ class EbreEscoolMigrator implements Migrator
         $department->location_id = $this->getLocation($srcDepartment->location_id)->id;
         $department->save();
         $department->shortname = $srcDepartment->shortname;
-        $department->head = $this->getTeacher($srcDepartment->head);
+        $department->head = $this->translateTeacher($srcDepartment->head);
 
         return $department;
 
@@ -845,12 +1174,20 @@ class EbreEscoolMigrator implements Migrator
     /**
      * Create scool study submodule using ebre-escool study submodule.
      *
-     * @param StudySubModule $srcSubmodule     *
+     * @param StudySubModule $srcSubmodule
      * @return ScoolSubmodule
      */
     protected function createSubmodule(StudySubModule $srcSubmodule)
     {
-        $submodule = new Submodule();
+        //First Or new
+        $id = $this->SubModuleAlreadyExists($srcSubmodule);
+        if ($id != null) {
+            $submodule = Submodule::findOrFail($id);
+        } else {
+            dd("New");
+            $submodule = new Submodule();
+        }
+        
         $submodule->name = $srcSubmodule->name;
         $submodule->order = $srcSubmodule->order;
         $submodule->type = $this->mapTypes($srcSubmodule->type->id);
@@ -865,6 +1202,21 @@ class EbreEscoolMigrator implements Migrator
     }
 
     /**
+     * Check if submodule already exists and return id if exists (or null if not).
+     * @param $srcSubmodule
+     * @return null
+     */
+    protected function SubModuleAlreadyExists($srcSubmodule)
+    {
+        $module = $this->getScoolModule();
+        foreach ($module->submodules as $submodule) {
+//            dd($submodule->name . " | " . $srcSubmodule->name);
+            if ($submodule->name == $srcSubmodule->name ) return $submodule->id;
+        }
+        return null;
+    }
+
+    /**
      * get Scool location by ebre_escool location id.
      *
      * @param $id
@@ -873,17 +1225,6 @@ class EbreEscoolMigrator implements Migrator
     protected function getLocation($id)
     {
         return ScoolLocation::where('name', Location::findOrFail($id)->name)->firstOrFail();
-    }
-
-    /**
-     * get Scool Teacher by ebre_escool teacher id.
-     *
-     * @param $id
-     * @return mixed
-     */
-    protected function getTeacher($id)
-    {
-        return User::where('email', Teacher::findOrFail($id)->email)->firstOrFail();
     }
 
     /**
