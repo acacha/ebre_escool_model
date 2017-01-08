@@ -373,15 +373,15 @@ class EbreEscoolMigrator implements Migrator
             $this->setDestinationConnectionByPeriod($this->period);
             $this->switchToDestinationConnection();
             $this->output->info('Migrating period: ' . $period->name . '(' .  $period->id . ')');
-//            $this->migrateTeachers();
-//            $this->migrateLocations();
+            $this->migrateTeachers();
+            $this->migrateLocations();
             $this->migrateCurriculum();
-//            $this->migrateClassrooms();
-//            $this->migrateEnrollments();
-//            $this->seedDays();
-//            $this->seedShifts();
-//            $this->migrateTimeslots();
-//            $this->migrateLessons();
+            $this->migrateClassrooms();
+            $this->migrateEnrollments();
+            $this->seedDays();
+            $this->seedShifts();
+            $this->migrateTimeslots();
+            $this->migrateLessons();
        }
     }
 
@@ -1187,7 +1187,7 @@ class EbreEscoolMigrator implements Migrator
             dd("New");
             $submodule = new Submodule();
         }
-        
+
         $submodule->name = $srcSubmodule->name;
         $submodule->order = $srcSubmodule->order;
         $submodule->type = $this->mapTypes($srcSubmodule->type->id);
