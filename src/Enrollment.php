@@ -23,7 +23,7 @@ class Enrollment extends Model
      */
     public function scopeActive($query)
     {
-
+        $this->scopeActiveOn($query,AcademicPeriod::current()->shortname);
     }
 
     /**
@@ -35,6 +35,7 @@ class Enrollment extends Model
      */
     public function scopeActiveOn($query, $period)
     {
+        return $query->where('enrollment_periodid', $period);
     }
 
     /**

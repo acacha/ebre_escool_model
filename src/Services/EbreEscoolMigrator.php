@@ -4,8 +4,6 @@ namespace Scool\EbreEscoolModel\Services;
 
 use DB;
 use Illuminate\Database\QueryException;
-use Monolog\Handler\SocketHandler;
-use Schema;
 use Scool\Curriculum\Models\Classroom;
 use Scool\Curriculum\Models\Module;
 use Scool\Curriculum\Models\Submodule;
@@ -373,15 +371,15 @@ class EbreEscoolMigrator implements Migrator
             $this->setDestinationConnectionByPeriod($this->period);
             $this->switchToDestinationConnection();
             $this->output->info('Migrating period: ' . $period->name . '(' .  $period->id . ')');
-            $this->migrateTeachers();
-            $this->migrateLocations();
-            $this->migrateCurriculum();
-            $this->migrateClassrooms();
+//            $this->migrateTeachers();
+//            $this->migrateLocations();
+//            $this->migrateCurriculum();
+//            $this->migrateClassrooms();
             $this->migrateEnrollments();
-            $this->seedDays();
-            $this->seedShifts();
-            $this->migrateTimeslots();
-            $this->migrateLessons();
+//            $this->seedDays();
+//            $this->seedShifts();
+//            $this->migrateTimeslots();
+//            $this->migrateLessons();
        }
     }
 
@@ -812,7 +810,12 @@ class EbreEscoolMigrator implements Migrator
     private function migrateEnrollments()
     {
         $this->output->info('### Migrating enrollments ###');
+        dd($this->enrollments()->count());
         foreach ($this->enrollments() as $enrollment) {
+            if ($enrollment->person == null ) {
+                $this->output->error('Skipping enrolmment because no personal data');
+                continue;
+            }
             $enrollment->showMigratingInfo($this->output,1);
             $newEnrollment = $this->migrateEnrollment($enrollment);
             if ($newEnrollment) $this->migrateEnrollmentDetails($enrollment, $newEnrollment);
@@ -961,12 +964,19 @@ class EbreEscoolMigrator implements Migrator
      * @param $oldEnrollment
      * @param $newEnrollment
      * @internal param $enrollment
+     * @return null
      */
     protected function migrateEnrollmentDetails($oldEnrollment,$newEnrollment)
     {
-        foreach ($this->enrollmentDetails($oldEnrollment) as $enrollmentDetail) {
-            $enrollmentDetail->showMigratingInfo($this->output,2);
-            $this->migrateEnrollmentDetail($enrollmentDetail,$newEnrollment->id);
+        try {
+            foreach ($this->enrollmentDetails($oldEnrollment) as $enrollmentDetail) {
+                $enrollmentDetail->showMigratingInfo($this->output, 2);
+                $this->migrateEnrollmentDetail($enrollmentDetail, $newEnrollment->id);
+            }
+        }  catch (\Exception $e) {
+            $this->output->error(
+            'Error migrating enrollment details. ' . class_basename($e) . ' ' .  $e->getMessage());
+            return null;
         }
     }
 
