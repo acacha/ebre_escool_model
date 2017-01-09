@@ -810,7 +810,6 @@ class EbreEscoolMigrator implements Migrator
     private function migrateEnrollments()
     {
         $this->output->info('### Migrating enrollments ###');
-        dd($this->enrollments()->count());
         foreach ($this->enrollments() as $enrollment) {
             if ($enrollment->person == null ) {
                 $this->output->error('Skipping enrolmment because no personal data');
