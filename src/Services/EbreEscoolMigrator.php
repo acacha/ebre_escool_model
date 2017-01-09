@@ -371,15 +371,15 @@ class EbreEscoolMigrator implements Migrator
             $this->setDestinationConnectionByPeriod($this->period);
             $this->switchToDestinationConnection();
             $this->output->info('Migrating period: ' . $period->name . '(' .  $period->id . ')');
-//            $this->migrateTeachers();
-//            $this->migrateLocations();
-//            $this->migrateCurriculum();
-//            $this->migrateClassrooms();
+            $this->migrateTeachers();
+            $this->migrateLocations();
+            $this->migrateCurriculum();
+            $this->migrateClassrooms();
             $this->migrateEnrollments();
-//            $this->seedDays();
-//            $this->seedShifts();
-//            $this->migrateTimeslots();
-//            $this->migrateLessons();
+            $this->seedDays();
+            $this->seedShifts();
+            $this->migrateTimeslots();
+            $this->migrateLessons();
        }
     }
 
