@@ -55,4 +55,13 @@ class Department extends Model
         return $this->getAttribute($key) ?: $this->getAttribute('department_' .$key) ;
     }
 
+    /**
+     * Get head of department.
+     *
+     */
+    public function headOfDepartment()
+    {
+        return $this->belongsTo(Teacher::class,'department_head');
+    }
+
 }

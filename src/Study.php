@@ -7,7 +7,8 @@ use Scool\EbreEscoolModel\Contracts\HasPeriods;
 use Scool\EbreEscoolModel\Traits\Periodable;
 
 /**
- * Class Study
+ * Class Study.
+ *
  * @package Scool\EbreEscoolModel
  */
 class Study extends EloquentModel implements HasPeriods

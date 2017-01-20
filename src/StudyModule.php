@@ -1,6 +1,7 @@
 <?php
 
 namespace Scool\EbreEscoolModel;
+
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Scool\EbreEscoolModel\Traits\Periodable;
 
@@ -51,6 +52,7 @@ class StudyModule extends EloquentModel
      * Search for attribute in current period.
      *
      * @param $key
+     * @return string
      */
     public function getAttributeInPeriod($key)
     {
@@ -79,14 +81,14 @@ class StudyModule extends EloquentModel
      * Get courses related to study modules.
      */
     public function courses() {
-        $this->getActiveModule()->courses();
+        return $this->getActiveModule()->courses();
     }
 
     /**
      * Get study related to study module.
      */
     public function study() {
-        $this->getActiveModule()->courses()->first()->study();
+        return $this->getActiveModule()->courses()->first()->study()->first();
     }
 
     /**
@@ -129,5 +131,13 @@ class StudyModule extends EloquentModel
     public function type()
     {
         return $this->belongsTo(StudyModuleType::class,'study_module_type', 'study_module_type_id');
+    }
+
+    /**
+     * Get the module's subtype.
+     */
+    public function subtype()
+    {
+        return $this->belongsTo(StudyModuleSubtype::class,'study_module_subtype', 'study_module_subtype_id');
     }
 }
