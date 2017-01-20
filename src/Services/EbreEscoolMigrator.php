@@ -411,6 +411,7 @@ class EbreEscoolMigrator implements Migrator
         $user->password = bcrypt('secret');
         $user->remember_token = str_random(10);
         $user->save();
+        //TODO: migrate teacher codes, create roles and assign to user/teachers
     }
 
     /**
@@ -822,7 +823,7 @@ class EbreEscoolMigrator implements Migrator
         $this->output->info('### END Migrating enrollments ###');
     }
 
-    /**
+    /** 
      * Seed days of the week with ISO-8601 numeric code.
      */
     protected function seedDays()
@@ -1113,7 +1114,7 @@ class EbreEscoolMigrator implements Migrator
         $department->save();
         $department->shortname = $srcDepartment->shortname;
         $department->head = $this->translateTeacher($srcDepartment->head);
-
+        //TODO: Damilies professionals, Assignar professors a departaments
         return $department;
 
     }
@@ -1239,6 +1240,7 @@ class EbreEscoolMigrator implements Migrator
      *
      * @param $model
      * @param int $level
+     * TODO https://github.com/acacha/ebre_escool_migration/issues/4
      */
     protected function showMigratingInfo($model, $level = 0) {
         $suffix = '';

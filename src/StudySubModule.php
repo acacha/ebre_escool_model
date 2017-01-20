@@ -1,6 +1,7 @@
 <?php
 
 namespace Scool\EbreEscoolModel;
+
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Scool\EbreEscoolModel\Traits\Periodable;
 
@@ -105,5 +106,15 @@ class StudySubModule extends EloquentModel
     public function getTypeAttribute($value)
     {
         return $this->module->type;
+    }
+
+    /**
+     * Get the courses associated to study module.
+     */
+    public function courses()
+    {
+        return $this->belongsToMany(Course::class,'study_module_ap_courses'
+                                    ,'study_module_ap_courses_study_module_ap_id'
+                                    ,'study_module_ap_courses_course_id');
     }
 }

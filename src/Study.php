@@ -98,11 +98,36 @@ class Study extends EloquentModel implements HasPeriods
     }
 
     /**
-     * Get the study study modules.
+     * Get the active study modules for this study.
      */
     public function modules()
     {
-       // TODO though courses
+        $courses = $this->courses->pluck('course_id');
+        return StudyModule::whereHas('modulesByPeriod.courses', function ($query) use ($courses)  {
+            $query->whereIn('course_id',$courses);
+        });
+    }
+
+    /**
+     * Get the active study modules for this study on period id.
+     *
+     */
+    public function modulesActiveOn($periodId)
+    {
+        $courses = $this->coursesActiveOn($periodId)->pluck('course_id');
+        return StudyModule::whereHas('modulesByPeriod.courses', function ($query) use ($courses)  {
+            $query->whereIn('course_id',$courses);
+        });
+    }
+
+    /**
+     * Get modules attribute.
+     *
+     * @return mixed
+     */
+    public function getModulesAttribute()
+    {
+        return $this->modules()->get();
     }
 
     /**

@@ -67,10 +67,67 @@ class Teacher extends Model
     }
 
     /**
+     * Is teacher active.
+     *
+     * @param $value
+     * @return mixed
+     */
+    public function getActiveAttribute($value)
+    {
+        if ($this->details()->active()->first() != null) return true;
+        return false;
+    }
+
+    /**
+     * Get teacher code.
+     *
+     * @param $value
+     * @return mixed
+     */
+    public function getCodeAttribute($value)
+    {
+        if ($this->active) {
+            return $this->details()->active()->first()->code;
+        }
+        return null;
+    }
+
+    /**
+     * Get teacher department.
+     *
+     * @param $value
+     * @return mixed
+     */
+    public function getDepartmentAttribute($value)
+    {
+        if ($this->active) {
+            return Department::findOrFail(($this->details()->active()->first()->department_id));
+        }
+        return null;
+    }
+
+    /**
      * Get the oerson associated to this teacher.
      */
     public function person()
     {
         return $this->belongsTo(Person::class,'teacher_person_id','person_id');
+    }
+
+    /**
+     * Get the user associated to this teacher.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class,'teacher_user_id','id');
+    }
+
+    /**
+     * Get the teacher details for multiple academic periods
+     */
+    public function details()
+    {
+        return $this->hasMany(TeacherAcademicPeriod::class,
+            'teacher_academic_periods_teacher_id');
     }
 }
