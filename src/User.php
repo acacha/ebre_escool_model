@@ -29,7 +29,8 @@ class User extends Model
      */
     public function getNameAttribute($value)
     {
-        return $this->person->givenName . ' ' . $this->person->sn1 . ' ' . $this->person->sn2;
+        if ($this->person) return $this->person->givenName . ' ' . $this->person->sn1 . ' ' . $this->person->sn2;
+        return $value;
     }
 
     /**
@@ -48,7 +49,8 @@ class User extends Model
      */
     public function getEmailAttribute($value)
     {
-        return $this->person->email;
+        if ($this->person) return $this->person->email;
+        return $value;
     }
 
     /**
@@ -59,6 +61,7 @@ class User extends Model
      */
     public function getSecondaryEmailAttribute($value)
     {
-        return $this->person->secondary_email;
+        if ($this->person) return $this->person->secondary_email;
+        return $value;
     }
 }
