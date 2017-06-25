@@ -64,4 +64,42 @@ class User extends Model
         if ($this->person) return $this->person->secondary_email;
         return $value;
     }
+
+    /**
+     * Get email from user.
+     *
+     * @param $user
+     * @return null
+     */
+    public function getEmailFromUser()
+    {
+        $email = null;
+        try {
+            $email = $this->email;
+        } catch (\Exception $e){
+            return $this->getEmailFromPerson($this->person_id);
+        }
+        if(!$email) {
+            return $this->getEmailFromPerson($this->person_id);
+        }
+        return $email;
+    }
+
+    /**
+     * Get email from person.
+     *
+     * @param $personId
+     * @return null
+     */
+    protected function getEmailFromPerson($personId)
+    {
+        if ($personId) {
+            try {
+                return \Scool\EbreEscoolModel\Person::find($personId)->person_email;
+            } catch (\Exception $e){
+                info($e->getMessage());
+            }
+        }
+        return null;
+    }
 }
