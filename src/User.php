@@ -2,12 +2,14 @@
 
 namespace Scool\EbreEscoolModel;
 
+use Illuminate\Database\Eloquent\Model as EloquentModel;
+
 /**
  * Class User.
  *
  * @package Scool\EbreEscoolModel
  */
-class User extends Model
+class User extends EloquentModel
 {
     /**
      * Database connection name.
