@@ -19,13 +19,6 @@ class User extends EloquentModel
     protected $connection = 'ebre_escool';
 
     /**
-     * Hidden atributes in JSON.
-     *
-     * @var array
-     */
-    protected $hidden = ['ip_address'];
-
-    /**
      * @var string
      */
     protected $table = 'users';
