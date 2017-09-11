@@ -67,4 +67,12 @@ class Course extends Model implements HasPeriods
             'study_module_ap_courses_course_id','study_module_ap_courses_study_module_ap_id');
     }
 
+    /**
+     * Get the comments for the blog post.
+     */
+    public function classrooms()
+    {
+        return $this->hasMany(ClassroomGroup::class,'classroom_group_course_id','course_id');
+    }
+
 }

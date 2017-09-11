@@ -117,4 +117,14 @@ class StudySubModule extends EloquentModel
                                     ,'study_module_ap_courses_study_module_ap_id'
                                     ,'study_module_ap_courses_course_id');
     }
+
+    /**
+     * Get the course associated with submodule.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function course()
+    {
+        return $this->belongsTo(Course::class,'courseid','course_id');
+    }
 }
