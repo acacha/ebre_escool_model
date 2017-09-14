@@ -38,4 +38,20 @@ class AcademicPeriod extends EloquentModel
         return $query->where('academic_periods_current', 1);
     }
 
+    /**
+     * Get the classrooms that are active for the period.
+     */
+    public function classrooms()
+    {
+        return $this->belongsToMany(ClassroomGroup::class,'classroom_group_academic_periods','classroom_group_academic_periods_academic_period_id','classroom_group_academic_periods_classroom_group_id');
+    }
+
+    /**
+     * Get the teachers that are active for the period.
+     */
+    public function teachers()
+    {
+        return $this->belongsToMany(Teacher::class,'classroom_group_academic_periods','classroom_group_academic_periods_academic_period_id','classroom_group_academic_periods_classroom_group_id');
+    }
+
 }
